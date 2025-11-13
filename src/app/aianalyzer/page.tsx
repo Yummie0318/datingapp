@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AIAnalysisModal, AIAnalysisTexts } from "@/components/AIAnalysisModal";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,18 +15,26 @@ const defaultTexts: AIAnalysisTexts = {
 };
 
 export default function AIAnalyzerPage() {
+  // Wrap client logic inside a suspense boundary
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <AIAnalyzerInner />
+    </Suspense>
+  );
+}
+
+// Separate the logic into its own client sub-component
+function AIAnalyzerInner() {
   const router = useRouter();
   const params = useSearchParams();
 
-  // Optional query controls
   const redirectTo = params.get("redirectTo") || "/discover";
   const durationMs = (() => {
     const raw = params.get("durationMs");
     const n = raw ? Number(raw) : NaN;
-    return Number.isFinite(n) && n > 0 ? n : undefined; // falls back to modal default
+    return Number.isFinite(n) && n > 0 ? n : undefined;
   })();
 
-  // i18n for the modal texts
   const { texts, loading: i18nLoading } = useTranslation(
     defaultTexts,
     "aiAnalysisModal"
@@ -34,41 +43,36 @@ export default function AIAnalyzerPage() {
   const safeTexts: AIAnalysisTexts =
     texts && "analyzingTitle" in texts ? (texts as AIAnalysisTexts) : defaultTexts;
 
-  // While translations are loading: hard skeleton screen, nothing clickable
   if (i18nLoading) {
-    return (
-      <main className="min-h-screen bg-[#F2F4F8] flex items-center justify-center">
-        <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-xl">
-          {/* Orb skeleton */}
-          <div className="mx-auto mb-6 h-32 w-32 rounded-full bg-gray-200 animate-pulse" />
-
-          {/* Title skeleton */}
-          <div className="h-5 w-40 bg-gray-200 rounded-full mx-auto mb-3 animate-pulse" />
-
-          {/* Percentage skeleton */}
-          <div className="h-4 w-16 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse" />
-
-          {/* Status lines skeleton */}
-          <div className="space-y-2">
-            <div className="h-3 w-56 bg-gray-200 rounded-full mx-auto animate-pulse" />
-            <div className="h-3 w-48 bg-gray-200 rounded-full mx-auto animate-pulse" />
-            <div className="h-3 w-52 bg-gray-200 rounded-full mx-auto animate-pulse" />
-          </div>
-        </div>
-      </main>
-    );
+    return <LoadingSkeleton />;
   }
 
-  // Once translated texts are ready: show the real modal
   return (
     <main className="min-h-screen bg-[#F2F4F8]">
-      {/* Fire the modal immediately; when done, navigate */}
       <AIAnalysisModal
         open
         durationMs={durationMs}
         texts={safeTexts}
         onComplete={() => router.replace(redirectTo)}
       />
+    </main>
+  );
+}
+
+// Simple skeleton loader while translations are loading or suspense is pending
+function LoadingSkeleton() {
+  return (
+    <main className="min-h-screen bg-[#F2F4F8] flex items-center justify-center">
+      <div className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-xl">
+        <div className="mx-auto mb-6 h-32 w-32 rounded-full bg-gray-200 animate-pulse" />
+        <div className="h-5 w-40 bg-gray-200 rounded-full mx-auto mb-3 animate-pulse" />
+        <div className="h-4 w-16 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse" />
+        <div className="space-y-2">
+          <div className="h-3 w-56 bg-gray-200 rounded-full mx-auto animate-pulse" />
+          <div className="h-3 w-48 bg-gray-200 rounded-full mx-auto animate-pulse" />
+          <div className="h-3 w-52 bg-gray-200 rounded-full mx-auto animate-pulse" />
+        </div>
+      </div>
     </main>
   );
 }
