@@ -7,7 +7,6 @@ import type { Match } from "@/components/DiscoverMatches";
 export default function ChatPage() {
   const router = useRouter();
 
-  // In a real app you’d pull the match from state, params, or server.
   const mockMatch: Match = {
     id: "2",
     name: "Alex",
@@ -21,5 +20,5 @@ export default function ChatPage() {
     location: "Seattle, WA",
   };
 
-  return <ChatScreen match={mockMatch} onBack={() => router.back()} />;
+  return <ChatScreen match={mockMatch} onBack={router.back} />;
 }

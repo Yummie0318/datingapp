@@ -1,16 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProfileDetails } from "@/components/ProfileDetails";
 import type { Match } from "@/components/DiscoverMatches";
 
+// Top-level component wraps your logic in Suspense
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="text-center p-6">Loading profile...</div>}>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}
+
+// Actual content component — safe to use useSearchParams() here
+function ProfilePageContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const id = params.get("id"); // expecting /profile?id=123 (matches your earlier push(`/profile/${m.id}`) can be adjusted)
+  const id = params.get("id"); // expects /profile?id=123
 
-  // Replace this with real data fetching or shared state.
   const mockMatches: Match[] = [
     {
       id: "1",

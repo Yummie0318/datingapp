@@ -6,16 +6,16 @@ import { AuidioCheck, AudioSampleResult } from "@/components/AuidioCheck";
 export default function AudioPage() {
   const router = useRouter();
 
-  const handleBack = () => {
-    router.push("/livelyness");
-  };
+  const handleBack = () => router.push("/livelyness");
 
   const handleComplete = (result: AudioSampleResult) => {
-    // result = { granted, durationMs, blobUrl, mimeType }
     console.log("Audio sample:", result);
-    // TODO: upload blob to your backend:
-    // fetch("/api/upload-audio", { method: "POST", body: await (await fetch(result.blobUrl!)).blob() })
-    router.push("/aianalyzer"); // or next step
+
+    // TODO: upload blob to backend
+    // const blob = await (await fetch(result.blobUrl!)).blob();
+    // await fetch("/api/upload-audio", { method: "POST", body: blob });
+
+    router.push("/aianalyzer");
   };
 
   return <AuidioCheck onBack={handleBack} onComplete={handleComplete} />;
