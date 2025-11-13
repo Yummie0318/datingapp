@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+
+  // Use username in code, still backed by DB column "name" (no data loss)
+  username    String?   @map("name")
+
+  // Optional for anonymous users
+  email       String?   @unique
+  password    String?
+
+  // Anonymous-scale helpers
+  anonTag     String?   @unique
+  lastActive  DateTime  @default(now())
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // AI-related profile data
+  bio             String?   @db.Text
+  interests       String[]  @default([])
+  languages       String[]  @default([])
+  region          String?
+  anonymous       Boolean   @default(false)
+  aiUnderstanding Float     @default(0)
+  embedding       Json?
+
+  personalityTraits PersonalityTraits[]
+
+  // Relations
+  compatibilityScoresAsUser       CompatibilityScores[] @relation("UserScores")
+  compatibilityScoresAsCompatible CompatibilityScores[] @relation("CompatibleUserScores")
+
+  matchSuggestionsAsUser      MatchSuggestions[] @relation("UserSuggestions")
+  matchSuggestionsAsSuggested MatchSuggestions[] @relation("SuggestedUserSuggestions")
+
+  subscriptions UserSubscriptions[]
+  payments      Payments[]
+  aiAnalyses    AIAnalysis[]
+
+  @@index([anonymous, createdAt])
+  @@index([lastActive])
+}
+
+model PersonalityTraits {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  traitName  String
+  traitScore Float
+  createdAt  DateTime @default(now())
+}
+
+model CompatibilityScores {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation("UserScores", fields: [userId], references: [id])
+  userId           Int
+  compatibleUser   User     @relation("CompatibleUserScores", fields: [compatibleUserId], references: [id])
+  compatibleUserId Int
+  score            Float
+  aiRationale      String?  @db.Text
+  createdAt        DateTime @default(now())
+}
+
+model MatchSuggestions {
+  id              Int      @id @default(autoincrement())
+  user            User     @relation("UserSuggestions", fields: [userId], references: [id])
+  userId          Int
+  suggestedUser   User     @relation("SuggestedUserSuggestions", fields: [suggestedUserId], references: [id])
+  suggestedUserId Int
+  reason          String?  @db.Text
+  matchStrength   Float?
+  createdAt       DateTime @default(now())
+}
+
+model Subscriptions {
+  id           Int      @id @default(autoincrement())
+  name         String
+  price        Float
+  durationDays Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userSubscriptions UserSubscriptions[]
+}
+
+model UserSubscriptions {
+  id             Int           @id @default(autoincrement())
+  user           User          @relation(fields: [userId], references: [id])
+  userId         Int
+  subscription   Subscriptions @relation(fields: [subscriptionId], references: [id])
+  subscriptionId Int
+  startDate      DateTime
+  endDate        DateTime
+  status         String
+  createdAt      DateTime      @default(now())
+}
+
+model Payments {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  amount        Float
+  currency      String
+  paymentMethod String
+  status        String
+  transactionId String   @unique
+  createdAt     DateTime @default(now())
+}
+
+model AIAnalysis {
+  id                  Int       @id @default(autoincrement())
+  user                User      @relation(fields: [userId], references: [id])
+  userId              Int
+  progress            Float
+  status              String
+  durationMs          Int?
+  completedAt         DateTime?
+  summary             String?   @db.Text
+  recommendations     Json?
+  compatibilityVector Json?
+}
